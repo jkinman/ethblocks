@@ -6,8 +6,8 @@ class EthersDataSource {
   protected eth: Array<ethers.Block> = [];
   constructor() {
     this.provider = new ethers.InfuraProvider(
-      "mainnet",
-      "238f5ecd44994db7b64c0d4df6ce8541"
+        process.env.INFURA_NETWORK,
+        process.env.INFURA_SECRET
     );
   }
 
@@ -31,8 +31,6 @@ class EthersDataSource {
     await Promise.all(filledTransations);
     return filledTransations;
   }
-
-  //   async fetchTransactions
 
   //  pollEthereum():void {
   //     const block = this.provider.getBlockNumber()
