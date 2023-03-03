@@ -1,4 +1,3 @@
-import { createContext } from "react";
 import { ethers } from "ethers";
 
 class EthersDataSource {
@@ -6,8 +5,8 @@ class EthersDataSource {
   protected eth: Array<ethers.Block> = [];
   constructor() {
     this.provider = new ethers.InfuraProvider(
-        process.env.INFURA_NETWORK,
-        process.env.INFURA_SECRET
+      process.env.INFURA_NETWORK,
+      process.env.INFURA_SECRET
     );
   }
 
@@ -31,15 +30,6 @@ class EthersDataSource {
     await Promise.all(filledTransations);
     return filledTransations;
   }
-
-  //  pollEthereum():void {
-  //     const block = this.provider.getBlockNumber()
-  //     console.log(block)
-
-  //     setTimeout(this.pollEthereum.bind(this), 4000);
-  //     this.provider.
-  //   }
 }
 
-export const EthContext = createContext(0);
 export default EthersDataSource;
