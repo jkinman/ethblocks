@@ -1,6 +1,5 @@
-import React, {useRef, MutableRefObject} from "react";
+import React, { useRef, MutableRefObject } from "react";
 import BlockScene from "./BlockScene";
-// let threeRootElement: HTMLDivElement; // ref to canvas container
 let blockScene = new BlockScene();
 
 interface ThreeComponentProps {
@@ -13,18 +12,12 @@ export default (props: ThreeComponentProps) => {
 
   React.useEffect(() => {
     blockScene.start(threeRootElementRef.current);
-    return ()=>blockScene.stop();
+    return () => blockScene.stop();
   }, []);
 
   React.useEffect(() => {
     console.log("BlockScene: props updated");
   }, [block, blockNumber]);
 
-  return (
-    <div
-      className="three-canvas-container"
-    //   ref={(element) => (threeRootElementRef = element as HTMLDivElement)}
-      ref={threeRootElementRef}
-    />
-  );
+  return <div className="three-canvas-container" ref={threeRootElementRef} />;
 };

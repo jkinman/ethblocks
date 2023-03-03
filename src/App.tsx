@@ -1,4 +1,4 @@
-import './style/three.scss'
+import "./style/three.scss";
 
 import * as React from "react";
 import {
@@ -20,7 +20,6 @@ import ThreeComponent from "./scene/ThreeComponent";
 
 // create the eth service
 const ethersDataSource = new EthersDataSource();
-
 
 export const App = () => {
   const [block, setBlock] = React.useState<object>({});
@@ -66,8 +65,8 @@ export const App = () => {
             <Heading>Hello World</Heading>
             <Text>
               <Code>{JSON.stringify(blockNumber)}</Code>
-              <ThreeComponent block={block} blockNumber={blockNumber} />
             </Text>
+            <ThreeComponent block={block} blockNumber={blockNumber} />
           </VStack>
         </Grid>
       </Box>
