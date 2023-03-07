@@ -21,8 +21,14 @@ import ThreeComponent from "./scene/ThreeComponent";
 // create the eth service
 const ethersDataSource = new EthersDataSource();
 
+type Block = {
+  transactions: any[];
+}
+
+
 export const App = () => {
-  const [block, setBlock] = React.useState<object>({});
+  const [blockData, setBlockData] = React.useState([])
+  const [block, setBlock] = React.useState<Block>(null);
   const [blockNumber, setBlockNumber] = React.useState<number>(0);
 
   // add useSyncExternalStore to poll the blockchain
@@ -39,21 +45,28 @@ export const App = () => {
 
     await filledTransactions.map((val) =>
       val.then(async (a) => {
-        if (a) unpacked.push(a);
+        if (a)  unpacked.push(a.toJSON()); 
       })
     );
 
     console.log(unpacked);
 
     const normalizedBlock = {
-      ...blockReturn,
+      ...blockReturn.toJSON(),
       transactions: unpacked,
     };
+    const newBlock:any[] = []
+    newBlock[`${blockNumber}`] = normalizedBlock
+    setBlockData( [...blockData, newBlock] )
     setBlock(normalizedBlock);
+    localStorage.setItem('lastblock', JSON.stringify(normalizedBlock));
+    debugger
   };
 
   React.useEffect(() => {
+
     getBlock();
+
   }, []);
 
   return (
