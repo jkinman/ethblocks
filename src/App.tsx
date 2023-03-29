@@ -11,10 +11,13 @@ import {
   Grid,
   theme,
   Heading,
+  Slider,
+  SliderTrack,
+  SliderFilledTrack,
+  SliderThumb,
 } from "@chakra-ui/react";
 import ethers from "ethers";
 import { ColorModeSwitcher } from "./ColorModeSwitcher";
-import { Logo } from "./Logo";
 import EthersDataSource from "./sources/EthersDataSource";
 import ThreeComponent from "./scene/ThreeComponent";
 
@@ -23,11 +26,14 @@ const ethersDataSource = new EthersDataSource();
 
 type Block = {
   transactions: any[];
-}
+};
 
+const lastBlock = JSON.parse(localStorage.getItem("lastblock"));
+let lastBlockNum;
+if (lastBlock) lastBlockNum = lastBlock.number;
 
 export const App = () => {
-  const [blockData, setBlockData] = React.useState([])
+  const [blockData, setBlockData] = React.useState(new Map());
   const [block, setBlock] = React.useState<Block>(null);
   const [blockNumber, setBlockNumber] = React.useState<number>(0);
 
@@ -45,43 +51,67 @@ export const App = () => {
 
     await filledTransactions.map((val) =>
       val.then(async (a) => {
-        if (a)  unpacked.push(a.toJSON()); 
+        if (a) unpacked.push(a.toJSON());
       })
     );
-
-    console.log(unpacked);
 
     const normalizedBlock = {
       ...blockReturn.toJSON(),
       transactions: unpacked,
     };
-    const newBlock:any[] = []
-    newBlock[`${blockNumber}`] = normalizedBlock
-    setBlockData( [...blockData, newBlock] )
+
+    blockData.set(blockNumber, normalizedBlock);
+    setBlockData(new Map(blockData));
     setBlock(normalizedBlock);
-    localStorage.setItem('lastblock', JSON.stringify(normalizedBlock));
-    debugger
+    localStorage.setItem("lastblock", JSON.stringify(normalizedBlock));
+    console.log(blockData);
   };
 
   React.useEffect(() => {
-
     getBlock();
-
   }, []);
+
+  const blockKeys = [];
+  for (const block of blockData.keys()) {
+    blockKeys.push(block);
+  }
+
+  const BlockSelection = (props:any) => {
+    
+    const { blockKeys, setBlock} = props
+    return (
+      <Slider defaultValue={blockKeys.length} min={1} max={blockKeys.length} step={1} >
+        <SliderTrack bg="red.100">
+          <Box position="relative" right={10} />
+          <SliderFilledTrack bg="tomato" />
+        </SliderTrack>
+        <SliderThumb boxSize={6} />
+      </Slider>
+    );
+  };
+
 
   return (
     <ChakraProvider theme={theme}>
       <Box textAlign="center" fontSize="xl">
-        <Grid minH="100vh" p={3}>
-          <ColorModeSwitcher justifySelf="flex-end" />
-          <VStack spacing={8}>
-            <Heading>Hello World</Heading>
-            <Text>
-              <Code>{JSON.stringify(blockNumber)}</Code>
-            </Text>
-            <ThreeComponent block={block} blockNumber={blockNumber} />
-          </VStack>
-        </Grid>
+        {/* <Grid minH="100vh" p={3}> */}
+        <ColorModeSwitcher justifySelf="flex-end" />
+        <VStack spacing={8}>
+          <Heading>Literal Ethereum Block Explorer</Heading>
+          <Text>
+            Each block is a transaction with mass and lifespan of log(value)
+          </Text>
+          <Text>
+            {blockKeys.map((el) => (
+              <Code key={el} onClick={() => setBlockNumber(el)}>
+                {el}/
+              </Code>
+            ))}
+          </Text>
+          {/* <BlockSelection blockKeys={blockKeys} setBlock={setBlockNumber} /> */}
+          <ThreeComponent block={block} blockNumber={blockNumber} />
+        </VStack>
+        {/* </Grid> */}
       </Box>
     </ChakraProvider>
   );

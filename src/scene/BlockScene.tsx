@@ -3,6 +3,7 @@ import * as THREE from "three";
 import { OrbitControls } from "three-orbitcontrols-ts";
 import * as CANNON from "cannon-es";
 import { textChangeRangeIsUnchanged } from "typescript";
+import ethImage from "../assets/ethereum_black_logo_sticker.jpg";
 
 type Block = {
   transactions: any[];
@@ -30,18 +31,18 @@ export default class BlockScene {
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.setClearAlpha(0);
     this.camera = new THREE.PerspectiveCamera(
-      40,
+      30,
       this.SCREEN_WIDTH / this.SCREEN_HEIGHT,
       2,
       6000
     );
-    this.camera.position.x = 50;
-    this.camera.position.y = 50;
-    this.camera.position.z = 50;
+    this.camera.position.x = 100;
+    this.camera.position.y = 20;
+    // this.camera.position.z = 50;
 
-    this.world = new CANNON.World({ gravity: new CANNON.Vec3(0, -9.82, 0) });
-    this.world.gravity.set(0, -30, 0);
-    this.world.defaultContactMaterial.restitution = 0.25;
+    this.world = new CANNON.World();
+    this.world.gravity.set(0, -60, 0);
+    this.world.defaultContactMaterial.restitution = 0.4;
 
     // set up orbit
     this.controls = new OrbitControls(this.camera);
@@ -49,7 +50,6 @@ export default class BlockScene {
     // How far you can orbit vertically, upper and lower limits.
     this.controls.minPolarAngle = 0;
     this.controls.maxPolarAngle = Math.PI;
-
     // How far you can dolly in and out ( PerspectiveCamera only )
     this.controls.minDistance = 0;
     this.controls.maxDistance = Infinity;
@@ -65,10 +65,17 @@ export default class BlockScene {
   }
 
   lightScene() {
-    this.scene.add(new THREE.AxesHelper(5));
+    // this.scene.add(new THREE.AxesHelper(5));
+    
+    const ambientLight = new THREE.AmbientLight("white", 0.3);
+    this.scene.add(ambientLight);
+
+    const mainLight = new THREE.DirectionalLight("white", 1);
+    mainLight.position.set(10, 10, 10);
+    this.scene.add(mainLight);
 
     const light1 = new THREE.SpotLight();
-    light1.position.set(2.5, 5, 5);
+    light1.position.set(20, 20, 20);
     light1.angle = Math.PI / 4;
     light1.penumbra = 0.5;
     light1.castShadow = true;
@@ -76,10 +83,10 @@ export default class BlockScene {
     light1.shadow.mapSize.height = 1024;
     light1.shadow.camera.near = 0.5;
     light1.shadow.camera.far = 20;
-    this.scene.add(light1);
+    // this.scene.add(light1);
 
     const light2 = new THREE.SpotLight();
-    light2.position.set(-2.5, 5, 5);
+    light2.position.set(-10, -10, 20);
     light2.angle = Math.PI / 4;
     light2.penumbra = 0.5;
     light2.castShadow = true;
@@ -87,7 +94,7 @@ export default class BlockScene {
     light2.shadow.mapSize.height = 1024;
     light2.shadow.camera.near = 0.5;
     light2.shadow.camera.far = 20;
-    this.scene.add(light2);
+    // this.scene.add(light2);
   }
 
   start(ref: HTMLDivElement | undefined) {
@@ -95,27 +102,6 @@ export default class BlockScene {
     this.mounted = true;
     if (ref) this.ref = ref;
     this.canvas = this.ref.appendChild(this.renderer.domElement);
-
-    // const normalMaterial = new THREE.MeshNormalMaterial();
-    // const phongMaterial = new THREE.MeshPhongMaterial();
-
-    // const cubeGeometry = new THREE.BoxGeometry(1, 1, 1);
-    // const cubeMesh = new THREE.Mesh(cubeGeometry, normalMaterial);
-    // cubeMesh.position.x = -3;
-    // cubeMesh.position.y = 5;
-    // cubeMesh.castShadow = true;
-    // this.scene.add(cubeMesh);
-
-    // const cubeShape = new CANNON.Box(new CANNON.Vec3(0.5, 0.5, 0.5));
-    // const cubeBody = new CANNON.Body({ mass: 1 });
-    // cubeBody.addShape(cubeShape);
-    // cubeBody.position.x = cubeMesh.position.x;
-    // cubeBody.position.y = cubeMesh.position.y;
-    // cubeBody.position.z = cubeMesh.position.z;
-    // this.world.addBody(cubeBody);
-
-    // this.cannonObjs.push({ mesh: cubeMesh, body: cubeBody });
-
     this.animate();
   }
 
@@ -127,7 +113,7 @@ export default class BlockScene {
       })
     );
     floor.receiveShadow = true;
-    floor.position.y = 0;
+    floor.position.y = -15;
     floor.quaternion.setFromAxisAngle(
       new THREE.Vector3(-1, 0, 0),
       Math.PI * 0.5
@@ -163,24 +149,58 @@ export default class BlockScene {
     for (let i: any = 0; i < block.transactions.length; i++) {
       let x, y, z, mass;
       z = Math.floor(i / Math.pow(dimentionLength, 2));
-      y = Math.floor(i / dimentionLength) % dimentionLength;
-      x = i % dimentionLength;
-      mass = Math.log(Number(block.transactions[i].value)) + 1;
-      this.makeCube(x, y, z, mass);
+      y =
+        (Math.floor(i / dimentionLength) % dimentionLength) -
+        dimentionLength / 2;
+      x = (i % dimentionLength) - dimentionLength / 2;
+      mass = Math.log(Number(block.transactions[i].value)) + 0.1;
+      const newCube = this.makeCube(x, y, z, mass);
+
+      // generate material based on transaction data
+      // const material = this.getTokenMaterial(block.transactions[i]);
+      // newCube.mesh.material = material;
+      this.scene.add(newCube.mesh);
+      this.world.addBody(newCube.body);
+      this.cannonObjs.push({
+        mesh: newCube.mesh,
+        body: newCube.body,
+        createdAt: Date.now(),
+        removeAt: Date.now() + (0.5 + mass) * 1000,
+      });
     }
   }
 
-  makeCube(x: number, y: number, z: number, mass: number) {
-    const normalMaterial = new THREE.MeshNormalMaterial();
+  getTokenMaterial(transaction: any): THREE.MeshBasicMaterial {
+    let tokenImage = ethImage;
+    let key = `material-${transaction.hash}`;
+    if (transaction.from) tokenImage = `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/${transaction.from}/logo.png`
+    // if (transaction.to)
+    //   tokenImage = `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/${transaction.to}/logo.png`;
+    const texture = new THREE.TextureLoader().load(tokenImage);
+    let myMaterial = new THREE.MeshBasicMaterial();
+    myMaterial.map = texture;
+    myMaterial.color = new THREE.Color("#518ded");
+    if (!transaction.fromToken && !transaction.toToken) myMaterial.wireframe = true
+    return myMaterial;
+  }
+
+  makeCube(
+    x: number,
+    y: number,
+    z: number,
+    mass: number
+  ): { mesh: THREE.Mesh; body: CANNON.Body } {
+    // const normalMaterial = new THREE.MeshNormalMaterial();
     const phongMaterial = new THREE.MeshPhongMaterial();
+    phongMaterial.color = new THREE.Color("#518ded");
 
     const cubeGeometry = new THREE.BoxGeometry(1, 1, 1);
-    const cubeMesh = new THREE.Mesh(cubeGeometry, normalMaterial);
+    const cubeMesh = new THREE.Mesh(cubeGeometry, phongMaterial);
     cubeMesh.position.x = x;
-    cubeMesh.position.y = y + 20;
+    cubeMesh.position.y = y + 40;
     cubeMesh.position.z = z;
     cubeMesh.castShadow = true;
-    this.scene.add(cubeMesh);
+    cubeMesh.receiveShadow = true;
 
     const cubeShape = new CANNON.Box(new CANNON.Vec3(0.5, 0.5, 0.5));
     const cubeBody = new CANNON.Body({ mass: mass });
@@ -188,14 +208,8 @@ export default class BlockScene {
     cubeBody.position.x = cubeMesh.position.x;
     cubeBody.position.y = cubeMesh.position.y;
     cubeBody.position.z = cubeMesh.position.z;
-    this.world.addBody(cubeBody);
 
-    this.cannonObjs.push({
-      mesh: cubeMesh,
-      body: cubeBody,
-      createdAt: Date.now(),
-      removeAt: Date.now() + (10 + mass) * 1000,
-    });
+    return { mesh: cubeMesh, body: cubeBody };
   }
   animate() {
     // this.delta = Math.min(this.clock.getDelta(), 0.1);
